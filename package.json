@@ -1,0 +1,20 @@
+{
+  "name": "myapp",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "dependencies": {
+    "csv-stringify": "^5.3.4",
+    "express": "^4.17.1",
+    "mssql": "^6.0.1"
+  },
+  "devDependencies": {
+    "standard": "^14.3.1"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "debug": "DEBUG=* node app.js",
+    "check-coding-standards": "yarn standard",
+    "apply-coding-standards": "yarn standard --fix"
+  }
+}
