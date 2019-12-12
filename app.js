@@ -16,51 +16,53 @@ const getFormat = (path, defaultValue) => {
 // @TODO: Someone has to read up on error handling!
 for (const [route, spec] of Object.entries(config.routes)) {
   app.get(new RegExp(route + '(?:\\.(csv|json))?$'), async (req, res, next) => {
-    try {
-      const connection = await sql.connect(config.connections[spec.connection || 'default'])
-      const result = await sql.query(spec.query)
-      let data = result.recordset
-      let createdAt = new Date()
+    sql.connect(config.connections[spec.connection || 'default'])
+      .then(pool => {
+        return pool.request().query(spec.query)
+      })
+      .then(result => {
+        let data = result.recordset
+        let createdAt = new Date()
 
-      await connection.close()
+        const lastResultFilename = path.join(__dirname, 'results', route + '.json')
 
-      const lastResultFilename = path.join(__dirname, 'results', route + '.json')
-
-      if (data === null || data.length === 0) {
-        try {
-          const content = fs.readFileSync(lastResultFilename)
-          data = JSON.parse(content)
-          createdAt = fs.statSync(lastResultFilename).birthtime
-        } catch (exception) {
-          throw new Error('Cannot get data')
-        }
-      } else {
-        fs.writeFileSync(lastResultFilename, JSON.stringify(data))
-      }
-
-      const format = getFormat(req.path, 'json')
-
-      if (format === 'csv') {
-        await csvStringify(
-          data,
-          {
-            header: true
-          },
-          function (err, data) {
-            if (err) {
-              throw err
-            }
-            res.contentType('text/csv')
-            res.header('content-created-at', createdAt.toISOString())
-            res.send(data)
+        if (data === null || data.length === 0) {
+          try {
+            const content = fs.readFileSync(lastResultFilename)
+            data = JSON.parse(content)
+            createdAt = fs.statSync(lastResultFilename).mtime
+          } catch (exception) {
+            throw new Error('Cannot get data')
           }
-        )
-      } else {
-        res.send(data)
-      }
-    } catch (exception) {
-      next(exception)
-    }
+        } else {
+          fs.writeFileSync(lastResultFilename, JSON.stringify(data))
+        }
+
+        const format = getFormat(req.path, 'json')
+
+        res.header('content-created-at', createdAt.toISOString())
+
+        if (format === 'csv') {
+          csvStringify(
+            data,
+            {
+              header: true
+            },
+            function (err, data) {
+              if (err) {
+                throw err
+              }
+              res.contentType('text/csv')
+              res.send(data)
+            }
+          )
+        } else {
+          res.send(data)
+        }
+      })
+      .catch(err => {
+        next(err)
+      })
   })
 }
 
