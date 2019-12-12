@@ -1,0 +1,43 @@
+module.exports = {
+  port: 3000,
+
+  connections: {
+    // The default connection.
+    'default': {
+      server: 'srvsql.example.com',
+      // domain: null,
+      user: 'user',
+      password: 'password',
+      database: 'db',
+      // encrypt: true,
+    },
+    another_connection: {
+      server: 'srvsql.example.com',
+      // domain: null,
+      user: 'admin',
+      password: 'password',
+      database: 'db',
+      // encrypt: true,
+    }
+
+  },
+
+  routes: {
+    items: {
+      // no connection specified. Uses 'default'.
+      query: `
+SELECT *
+  FROM items
+ WHERE 1=1
+`
+    },
+    users: {
+      connection: 'another_connection',
+      query: `
+SELECT *
+  FROM users
+ WHERE 1=1
+`
+    }
+  }
+}

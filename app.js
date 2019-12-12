@@ -15,10 +15,9 @@ const getFormat = (path, defaultValue) => {
 
 // @TODO: Someone has to read up on error handling!
 for (const [route, spec] of Object.entries(config.routes)) {
-  console.log(route)
-  app.get(new RegExp(route + '(?:\.(csv|json))?$'), async (req, res, next) => {
+  app.get(new RegExp(route + '(?:\\.(csv|json))?$'), async (req, res, next) => {
     try {
-      const connection = await sql.connect(config.connections[spec.connection])
+      const connection = await sql.connect(config.connections[spec.connection || 'default'])
       const result = await sql.query(spec.query)
       let data = result.recordset
       let createdAt = new Date()
@@ -69,7 +68,7 @@ app.get('/', (req, res) => {
   const baseUrl = req.protocol + '://' + req.get('host') + req.originalUrl
   const index = {}
 
-  for (const [route, spec] of Object.entries(config.routes)) {
+  for (const route of Object.keys(config.routes)) {
     index[route] = {
       json: baseUrl + route + '.json',
       csv: baseUrl + route + '.csv'
