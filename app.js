@@ -13,6 +13,8 @@ const getFormat = (path, defaultValue) => {
   return match ? match[1] : defaultValue
 }
 
+const getResultFilename = route => path.join(__dirname, 'results', route + '.json')
+
 // @TODO: Someone has to read up on error handling!
 for (const [route, spec] of Object.entries(config.routes)) {
   app.get(new RegExp(route + '(?:\\.(csv|json))?$'), async (req, res, next) => {
@@ -24,18 +26,18 @@ for (const [route, spec] of Object.entries(config.routes)) {
         let data = result.recordset
         let createdAt = new Date()
 
-        const lastResultFilename = path.join(__dirname, 'results', route + '.json')
+        const resultFilename = getResultFilename(route)
 
         if (data === null || data.length === 0) {
           try {
-            const content = fs.readFileSync(lastResultFilename)
+            const content = fs.readFileSync(resultFilename)
             data = JSON.parse(content)
-            createdAt = fs.statSync(lastResultFilename).mtime
+            createdAt = fs.statSync(resultFilename).mtime
           } catch (exception) {
             throw new Error('Cannot get data')
           }
         } else {
-          fs.writeFileSync(lastResultFilename, JSON.stringify(data))
+          fs.writeFileSync(resultFilename, JSON.stringify(data))
         }
 
         const format = getFormat(req.path, 'json')
@@ -71,7 +73,18 @@ app.get('/', (req, res) => {
   const index = {}
 
   for (const route of Object.keys(config.routes)) {
+    const resultUpdatedAt = (() => {
+      const resultFilename = getResultFilename(route)
+
+      try {
+        return fs.statSync(resultFilename).mtime
+      } catch (err) {
+        return null
+      }
+    })()
+
     index[route] = {
+      updatedAt: resultUpdatedAt ? resultUpdatedAt.toISOString() : null,
       json: baseUrl + route + '.json',
       csv: baseUrl + route + '.csv'
     }
