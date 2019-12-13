@@ -93,4 +93,5 @@ app.get('/', (req, res) => {
 })
 
 const port = config.port || 3000
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+const appName = config.appName || 'musikcsv'
+app.listen(port, () => console.log(`${appName} listening on port ${port}!`))

@@ -1,25 +1,24 @@
 module.exports = {
+  appName: 'musikcsv',
   port: 3000,
 
   connections: {
     // The default connection.
-    'default': {
+    default: {
       server: 'srvsql.example.com',
       // domain: null,
       user: 'user',
       password: 'password',
-      database: 'db',
       // encrypt: true,
+      database: 'db'
     },
     another_connection: {
       server: 'srvsql.example.com',
       // domain: null,
       user: 'admin',
       password: 'password',
-      database: 'db',
-      // encrypt: true,
+      database: 'db'
     }
-
   },
 
   routes: {
