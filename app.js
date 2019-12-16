@@ -48,7 +48,8 @@ for (const [route, spec] of Object.entries(config.routes)) {
           csvStringify(
             data,
             {
-              header: true
+              header: true,
+              delimiter: ';'
             },
             function (err, data) {
               if (err) {
