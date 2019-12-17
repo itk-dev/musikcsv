@@ -56,6 +56,11 @@ for (const [route, spec] of Object.entries(config.routes)) {
                 throw err
               }
               res.contentType('text/csv')
+
+              // Hack for Excel!
+              // Use , as decimal separator in floating point numbers.
+              data = data.replace(new RegExp('(;-?[0-9]*)\\.([0-9]*;)', 'g'), '$1,$2')
+
               res.send(data)
             }
           )
