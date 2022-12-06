@@ -2,20 +2,31 @@
 
 ## Installation
 
-```sh
-git clone https://github.com/itk-dev/musikcsv
-cd musikcsv
-```
-
-Copy `config.js.dist` to `config.js` and edit appropriately.
+Install node dependencies:
 
 ```sh
 docker compose up --detach
 docker compose run --rm node yarn install
 ```
 
+Copy `config.js.dist` to `config.js` and edit appropriately (it's
+[JSON5](https://json5.org/)!).
+
+Restart the node container after editing `config.js` to pick up the new configuration:
+
+```sh
+docker compose restart node
+```
+
 ## Test the data
 
 ```sh
-curl http://127.0.0.1:3000/
+open "http://$(docker compose port nginx 8080)"
+```
+
+## Coding standards
+
+```sh
+docker compose run --rm node yarn coding-standards-check
+docker compose run --rm node yarn coding-standards-apply
 ```

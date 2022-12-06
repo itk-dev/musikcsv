@@ -14,7 +14,7 @@
   "scripts": {
     "start": "node app.js",
     "debug": "DEBUG=* node app.js",
-    "check-coding-standards": "yarn standard",
-    "apply-coding-standards": "yarn standard --fix"
+    "coding-standards-check": "yarn standard",
+    "coding-standards-apply": "yarn standard --fix"
   }
 }
