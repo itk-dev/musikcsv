@@ -1,4 +1,4 @@
-const csvStringify = require('csv-stringify')
+const csvStringify = require('csv-stringify').stringify
 const express = require('express')
 const fs = require('fs')
 const path = require('path')
@@ -59,7 +59,7 @@ for (const [route, spec] of Object.entries(config.routes)) {
 
               // Hack for Excel!
               // Use , as decimal separator in floating point numbers.
-              data = data.replace(new RegExp('(;-?[0-9]*)\\.([0-9]*;)', 'g'), '$1,$2')
+              data = data.replace(/(?<=;|^)([0-9]+)\.([0-9]+)(?=;|$)/gm, '$1,$2')
 
               res.send(data)
             }
