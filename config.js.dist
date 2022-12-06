@@ -10,7 +10,8 @@ module.exports = {
       user: 'user',
       password: 'password',
       // encrypt: true,
-      database: 'db'
+      database: 'db',
+      trustServerCertificate: true
     },
     another_connection: {
       server: 'srvsql.example.com',
