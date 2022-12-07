@@ -29,7 +29,7 @@ services:
 
   node:
     image: node:18
-    command: yarn start
+    command: yarn start-dev
     working_dir: /app
     networks:
       - app

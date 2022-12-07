@@ -9,10 +9,15 @@
     "mssql": "^9.0.1"
   },
   "devDependencies": {
+    "nodemon": "^2.0.20",
     "standard": "^17.0.0"
+  },
+  "nodemonConfig": {
+    "ignore": ["results/**"]
   },
   "scripts": {
     "start": "node app.js",
+    "start-dev": "nodemon app.js",
     "debug": "DEBUG=* node app.js",
     "coding-standards-check": "yarn standard",
     "coding-standards-apply": "yarn standard --fix"
