@@ -2,41 +2,31 @@
 
 ## Installation
 
+Install node dependencies:
+
 ```sh
-git clone https://github.com/itk-dev/musikcsv
-cd musikcsv
+docker compose up --detach
+docker compose run --rm node yarn install
 ```
 
-Copy `config.js.dist` to `config.js` and edit appropriately.
+Copy `config.js.dist` to `config.js` and edit appropriately (it's
+[JSON5](https://json5.org/)!).
+
+Restart the node container after editing `config.js` to pick up the new configuration:
 
 ```sh
-yarn install
-```
-
-## Start the show
-
-Install [pm2](https://pm2.keymetrics.io/).
-
-For development, run
-
-```sh
-pm2 start ecosystem.config.js --env=development
-```
-
-For deployment, run
-
-```sh
-pm2 start ecosystem.config.js
-```
-
-After updates, run
-
-```sh
-pm2 reload ecosystem.config.js
+docker compose restart node
 ```
 
 ## Test the data
 
 ```sh
-curl http://127.0.0.1:3000/
+open "http://$(docker compose port nginx 8080)"
+```
+
+## Coding standards
+
+```sh
+docker compose run --rm node yarn coding-standards-check
+docker compose run --rm node yarn coding-standards-apply
 ```

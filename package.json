@@ -4,17 +4,22 @@
   "main": "app.js",
   "license": "MIT",
   "dependencies": {
-    "csv-stringify": "^5.3.4",
-    "express": "^4.17.1",
-    "mssql": "^6.0.1"
+    "csv-stringify": "^6.2.3",
+    "express": "^4.18.2",
+    "mssql": "^9.0.1"
   },
   "devDependencies": {
-    "standard": "^14.3.1"
+    "nodemon": "^2.0.20",
+    "standard": "^17.0.0"
+  },
+  "nodemonConfig": {
+    "ignore": ["results/**"]
   },
   "scripts": {
     "start": "node app.js",
+    "start-dev": "nodemon app.js",
     "debug": "DEBUG=* node app.js",
-    "check-coding-standards": "yarn standard",
-    "apply-coding-standards": "yarn standard --fix"
+    "coding-standards-check": "yarn standard",
+    "coding-standards-apply": "yarn standard --fix"
   }
 }
