@@ -13,7 +13,9 @@
     "standard": "^17.0.0"
   },
   "nodemonConfig": {
-    "ignore": ["results/**"]
+    "ignore": [
+      "results/**"
+    ]
   },
   "scripts": {
     "start": "node app.js",
