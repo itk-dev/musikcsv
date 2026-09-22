@@ -43,6 +43,8 @@ for (const [route, spec] of Object.entries(config.routes)) {
             const content = fs.readFileSync(resultFilename)
             data = JSON.parse(content)
             createdAt = fs.statSync(resultFilename).mtime
+            const ageSeconds = Math.round((Date.now() - createdAt.getTime()) / 1000)
+            console.error(`warn fallback route=${route} reason=empty-result age=${ageSeconds}s file=${resultFilename}`)
           } catch (exception) {
             throw new Error('Cannot get data')
           }
