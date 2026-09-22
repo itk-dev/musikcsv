@@ -63,12 +63,36 @@ const readCachedResult = (route, reason) => {
   }
 }
 
+// sql.connect() keeps a single pool for the whole process: the first call
+// creates it and every later call gets that same pool back and throws away the
+// config it was handed (mssql 11.0.2, lib/global-connection.js - unchanged
+// since 9). With more than one connection configured, whichever route was hit
+// first decided the database for all of them. One pool per named connection
+// instead, created on first use.
+const pools = new Map()
+
+const getPool = name => {
+  let pool = pools.get(name)
+
+  if (!pool) {
+    pool = new sql.ConnectionPool(config.connections[name]).connect()
+    // Drop a pool that never connected, so the next request tries again
+    // instead of awaiting the same rejected promise forever.
+    pool.catch(() => pools.delete(name))
+    pools.set(name, pool)
+  }
+
+  return pool
+}
+
 for (const [route, spec] of Object.entries(config.routes)) {
+  const connectionName = spec.connection || 'default'
+
   app.get(new RegExp(route + '(?:\\.(csv|json))?$'), async (req, res, next) => {
     let result = null
 
     try {
-      const pool = await sql.connect(config.connections[spec.connection || 'default'])
+      const pool = await getPool(connectionName)
       const { recordset } = await pool.request().query(spec.query)
 
       if (recordset && recordset.length > 0) {
