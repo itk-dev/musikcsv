@@ -83,6 +83,10 @@ sql.connect(c.connections["<connection>"])
 
 Replace `<connection>` with the connection name from `config.js`.
 
+Run through `idc` (the `itkdev-docker-compose` wrapper) rather than bare
+`docker compose`, because on that server bare `docker compose` resolves a
+different project name and reports no containers.
+
 If that major version changes, update the pin in
 `.github/workflows/test.yml` to match.
 
