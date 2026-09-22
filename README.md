@@ -40,17 +40,13 @@ characters. It is invented. Dumps of real data must never be committed — see
 
 ## The local database is not the production database
 
-Production runs **Microsoft SQL Server 2017** (14.0.3460.9, RTM-CU31-GDR,
-Enterprise Edition) on Windows Server 2016, at
-`srvsql41.adm.aarhuskommune.dk`, database `dataintegration`, schema `yesplan`,
-with NTLM authentication — the `domain: 'ADM'` key in `config.js` is what
-switches the driver from SQL Server authentication to NTLM.
+Production runs **Microsoft SQL Server 2017** on Windows Server 2016, with NTLM
+authentication — the `domain` key in `config.js` is what switches the driver
+from SQL Server authentication to NTLM.
 
 Two dates worth knowing: SQL Server 2017 leaves extended support in October
-2027, and Windows Server 2016 in January 2027. The build is also from January
-2023, so it is several years behind on cumulative updates. None of this is
-musikcsv's to fix — it is a shared municipal database server — but the app
-depends on it.
+2027, and Windows Server 2016 in January 2027. Neither is musikcsv's to fix —
+it is a shared municipal database server — but the app depends on it.
 
 Locally the `db` profile runs `mcr.microsoft.com/azure-sql-edge` instead. That
 is a **different product**, not a different version. It was chosen because it is
@@ -77,13 +73,15 @@ To re-check the production version after a server upgrade:
 ```sh
 idc exec node node -e '
 const sql = require("mssql"), c = require("./config");
-sql.connect(c.connections.srvsql41)
+sql.connect(c.connections["<connection>"])
   .then(p => p.request().query("SELECT @@VERSION AS v"))
   .then(r => console.log(r.recordset[0].v))
   .catch(e => console.error("FAILED:", e.message))
   .finally(() => process.exit(0));
 '
 ```
+
+Replace `<connection>` with the connection name from `config.js`.
 
 If that major version changes, update the pin in
 `.github/workflows/test.yml` to match.

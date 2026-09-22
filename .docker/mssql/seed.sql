@@ -1,5 +1,5 @@
 -- Synthetic seed data for local development. NOT real data.
--- Shape matches yesplan.Opusdata_ver2 / yesplan.Opusdata on srvsql41.
+-- Shape matches yesplan.Opusdata_ver2 / yesplan.Opusdata in production.
 -- Regenerate by hand if you need different data; see docs/local-development.md.
 
 IF DB_ID('dataintegration') IS NULL CREATE DATABASE dataintegration;
