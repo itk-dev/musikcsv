@@ -106,6 +106,21 @@ check('a failing query without a cache is a 500', async () => {
   assert.strictEqual(res.status, 500)
 })
 
+// config.dev.js.dist points wrong_server at a host that does not exist, so the
+// route can only answer if it was handed some other connection's pool. The
+// seeded stack has a single database, so the second server is an unreachable
+// one rather than a second container.
+const WRONG_SERVER_CACHE = path.join(__dirname, 'results', 'wrong_server.json')
+
+check('a named connection does not borrow another connection pool', async () => {
+  fs.rmSync(WRONG_SERVER_CACHE, { force: true })
+  // Open the mssql pool first - that is the pool the old code handed out to
+  // every later connection name.
+  assert.strictEqual((await fetch(`${BASE}/posidryeartsl.json`)).status, 200)
+  const res = await fetch(`${BASE}/wrong_server.json`)
+  assert.strictEqual(res.status, 500, 'wrong_server answered, so it queried another connection server')
+})
+
 // The dev container runs nodemon, so the app may be mid-restart. Wait for it
 // rather than racing it.
 const waitForApp = async (attempts = 30) => {
