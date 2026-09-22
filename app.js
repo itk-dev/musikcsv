@@ -6,6 +6,11 @@ const sql = require('mssql')
 
 const app = express()
 
+// Traefik is the only thing in front of the app and it sets X-Forwarded-For
+// and X-Forwarded-Proto itself. Trust that one hop, so req.ip is the real
+// client and req.protocol is https on the index page's links.
+app.set('trust proxy', 1)
+
 const config = require('./config')
 
 // One line per request: method, path, status, duration, row count, client ip.
