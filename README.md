@@ -75,7 +75,7 @@ MSSQL_IMAGE=mcr.microsoft.com/mssql/server:2017-latest docker compose --profile 
 To re-check the production version after a server upgrade:
 
 ```sh
-docker exec -i htdocs-node-1 node -e '
+idc exec node node -e '
 const sql = require("mssql"), c = require("./config");
 sql.connect(c.connections.srvsql41)
   .then(p => p.request().query("SELECT @@VERSION AS v"))
@@ -84,10 +84,6 @@ sql.connect(c.connections.srvsql41)
   .finally(() => process.exit(0));
 '
 ```
-
-Addressed by container name rather than `docker compose exec`, because on that
-server bare `docker compose` resolves a different project name and reports no
-containers.
 
 If that major version changes, update the pin in
 `.github/workflows/test.yml` to match.
