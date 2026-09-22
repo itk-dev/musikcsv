@@ -37,6 +37,8 @@ services:
     restart: unless-stopped
     command: yarn start
     working_dir: /app
+    environment:
+      - NODE_ENV=production
     networks:
       - app
     ports:
