@@ -8,6 +8,16 @@ const app = express()
 
 const config = require('./config')
 
+// One line per request: method, path, status, duration, row count.
+app.use((req, res, next) => {
+  const start = Date.now()
+  res.on('finish', () => {
+    const ms = Date.now() - start
+    console.log(`req ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms rows=${res.locals.rows === undefined ? '-' : res.locals.rows}`)
+  })
+  next()
+})
+
 const getFormat = (path, defaultValue) => {
   const match = /\.([a-z]+)$/g.exec(path)
   return match ? match[1] : defaultValue
@@ -39,6 +49,8 @@ for (const [route, spec] of Object.entries(config.routes)) {
         } else {
           fs.writeFileSync(resultFilename, JSON.stringify(data))
         }
+
+        res.locals.rows = data.length
 
         const format = getFormat(req.path, 'json')
 
