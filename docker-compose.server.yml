@@ -11,6 +11,9 @@ services:
     image: node:24
     restart: unless-stopped
     command: yarn start
+    # uid 1000 in the node images. The bind mount must be owned by it,
+    # or the app cannot write its cache to results/.
+    user: node
     working_dir: /app
     environment:
       - NODE_ENV=production
