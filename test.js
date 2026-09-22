@@ -11,7 +11,7 @@ const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
 
-const BASE = process.env.BASE_URL || 'http://nginx:8080'
+const BASE = process.env.BASE_URL || 'http://node:3000'
 const SEEDED_ROWS = 500
 
 const checks = []
@@ -23,6 +23,14 @@ check('index lists both routes', async () => {
   const body = await res.json()
   assert.ok(body.posidryeartsl, 'posidryeartsl missing from index')
   assert.ok(body.posidryeartsl_old, 'posidryeartsl_old missing from index')
+})
+
+// Traefik terminates TLS and forwards X-Forwarded-Proto. Without
+// app.set('trust proxy') express ignores it and the index emits http:// links
+// on a page served over https.
+check('the index honours the forwarded protocol', async () => {
+  const body = await (await fetch(`${BASE}/`, { headers: { 'x-forwarded-proto': 'https' } })).json()
+  assert.ok(body.posidryeartsl.csv.startsWith('https://'), `forwarded proto ignored: ${body.posidryeartsl.csv}`)
 })
 
 check('csv has the expected columns', async () => {
