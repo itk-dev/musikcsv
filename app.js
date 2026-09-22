@@ -31,6 +31,16 @@ const getFormat = (path, defaultValue) => {
 
 const getResultFilename = route => path.join(__dirname, 'results', route + '.json')
 
+// Write via a temp file in the same directory and rename, so a concurrent
+// reader never sees a half-written cache.
+const writeResult = (route, data) => {
+  const resultFilename = getResultFilename(route)
+  const tempFilename = `${resultFilename}.${process.pid}.tmp`
+
+  fs.writeFileSync(tempFilename, JSON.stringify(data))
+  fs.renameSync(tempFilename, resultFilename)
+}
+
 // Serve the last good result from disk. Returns null when there is none.
 const readCachedResult = (route, reason) => {
   const resultFilename = getResultFilename(route)
@@ -56,7 +66,7 @@ for (const [route, spec] of Object.entries(config.routes)) {
       const { recordset } = await pool.request().query(spec.query)
 
       if (recordset && recordset.length > 0) {
-        fs.writeFileSync(getResultFilename(route), JSON.stringify(recordset))
+        writeResult(route, recordset)
         result = { data: recordset, createdAt: new Date() }
       } else {
         result = readCachedResult(route, 'empty-result')
