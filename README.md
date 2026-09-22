@@ -33,6 +33,14 @@ docker compose run --rm node node .docker/mssql/seed.js
 The seed script waits for the database to accept connections, so it can be run
 immediately after `up`.
 
+The node container runs as uid 1042 (the deploy user on the server). On Linux,
+where the bind mount keeps host ownership, run it as yourself instead so it can
+write `node_modules` and `results`:
+
+```sh
+export NODE_UID_GID=$(id -u):$(id -g)
+```
+
 Data comes from `.docker/mssql/seed.sql`: 500 synthetic rows matching the
 production schema, including negative amounts, `NULL` in `SGTXT` and Danish
 characters. It is invented. Dumps of real data must never be committed — see
