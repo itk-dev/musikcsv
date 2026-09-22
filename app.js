@@ -107,7 +107,7 @@ for (const [route, spec] of Object.entries(config.routes)) {
 
           // Hack for Excel!
           // Use , as decimal separator in floating point numbers.
-          data = data.replace(/(?<=;|^)([0-9]+)\.([0-9]+)(?=;|$)/gm, '$1,$2')
+          data = data.replace(/(?<=;|^)(-?[0-9]+)\.([0-9]+)(?=;|$)/gm, '$1,$2')
 
           res.send(data)
         }
