@@ -4,7 +4,8 @@ module.exports = {
 
   // Push heartbeat to an Uptime Kuma push monitor. Off unless heartbeatUrl is
   // set: the monitor cannot reach this host, so the app pushes out on a timer
-  // and Kuma alerts when the pushes stop.
+  // and Kuma alerts when the pushes stop. Set the monitor's heartbeat interval
+  // longer than heartbeatIntervalMs, with a retry or two, or a restart pages.
   // heartbeatUrl: 'https://uptime.example.com/api/push/abc123',
   // heartbeatIntervalMs: 60000,
 
