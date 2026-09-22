@@ -31,14 +31,20 @@ const getFormat = (path, defaultValue) => {
 
 const getResultFilename = route => path.join(__dirname, 'results', route + '.json')
 
-// Write via a temp file in the same directory and rename, so a concurrent
-// reader never sees a half-written cache.
+// Write via a temp file in the same directory and rename, so a kill during the
+// write cannot leave a truncated cache on disk. A failed write is logged and
+// swallowed: the caller still has a fresh result to serve.
 const writeResult = (route, data) => {
   const resultFilename = getResultFilename(route)
   const tempFilename = `${resultFilename}.${process.pid}.tmp`
 
-  fs.writeFileSync(tempFilename, JSON.stringify(data))
-  fs.renameSync(tempFilename, resultFilename)
+  try {
+    fs.writeFileSync(tempFilename, JSON.stringify(data))
+    fs.renameSync(tempFilename, resultFilename)
+  } catch (err) {
+    console.error(`err cache-write route=${route} ${err.message}`)
+    fs.rmSync(tempFilename, { force: true })
+  }
 }
 
 // Serve the last good result from disk. Returns null when there is none.
