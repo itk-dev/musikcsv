@@ -14,7 +14,7 @@ services:
     # 1042 is the deploy user in ITK's images, so the tree on the server is
     # owned by it. It has no passwd entry in the node image, so HOME must be
     # set or tools that cache under it fail with EACCES.
-    user: ${COMPOSE_USER:-1042:1042}
+    user: ${NODE_UID_GID:-1042:1042}
     environment:
       - HOME=/tmp
       - NODE_ENV=production
