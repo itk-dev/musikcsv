@@ -30,9 +30,10 @@ services:
     # Default image is arm64-native so it runs unemulated on Apple Silicon.
     # CI overrides MSSQL_IMAGE with real SQL Server, which is amd64-only and
     # segfaults under QEMU (verified), but runs natively on GitHub runners.
+    # Pinned by digest: Azure SQL Edge is retired upstream.
     profiles:
       - db
-    image: ${MSSQL_IMAGE:-mcr.microsoft.com/azure-sql-edge:latest}
+    image: ${MSSQL_IMAGE:-mcr.microsoft.com/azure-sql-edge:latest@sha256:902628a8be89e35dfb7895ca31d602974c7bafde4d583a0d0873844feb1c42cf}
     networks:
       - app
     ports:
