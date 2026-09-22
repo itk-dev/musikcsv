@@ -4,8 +4,8 @@
 //   docker compose run --rm node node .docker/mssql/seed.js
 //   docker compose run --rm node node test.js
 //
-// Asserts what the stack does today. Known defects are recorded in
-// SERVICEEFTERSYN.md, not asserted here - add the assertion when fixing one.
+// Asserts what the stack does today. Known defects are not asserted here -
+// add the assertion when fixing one.
 
 const assert = require('assert')
 
