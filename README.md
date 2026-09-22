@@ -63,6 +63,23 @@ docker compose --env-file .env.docker.local --file docker-compose.server.yml ps
 `idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)), or
 address the container by name: `docker exec -i htdocs-node-1 …`.
 
+### config.js
+
+`config.js` is not in git. It exists only on the server, and it holds the only
+credentials the application has — the service account for the production
+database. `git checkout` and `reset --hard` leave it alone because
+`.gitignore` covers it.
+
+Backups of it belong outside the checkout. A `config.js.bck` was found in
+`~/www/musikcsv/htdocs`, untracked and not matched by `.gitignore`: one
+`git add .` from committing a service account password. Copy it to
+`~/config.js.<date>` instead, outside the repository.
+
+The database it points at is described under [The local database is not the
+production database](#the-local-database-is-not-the-production-database):
+SQL Server 2017 on Windows Server 2016, NTLM authentication through the
+`domain: 'ADM'` key.
+
 ## Installation
 
 Install node dependencies:
