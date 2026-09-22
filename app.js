@@ -81,6 +81,8 @@ for (const [route, spec] of Object.entries(config.routes)) {
         }
       })
       .catch(err => {
+        console.error(`err ${req.method} ${req.originalUrl} ${err.message}`)
+        console.error(err.stack)
         next(err)
       })
   })
