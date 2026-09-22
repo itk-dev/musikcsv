@@ -17,6 +17,16 @@ const SEEDED_ROWS = 500
 const checks = []
 const check = (name, fn) => checks.push([name, fn])
 
+// Checks that need the seeded database or the extra routes in
+// config.dev.js.dist. After a deploy the config is the production one, so run
+// only the rest:
+//
+//   SMOKE=1 node test.js
+//
+// What is left still queries the real database, which is the point: fetching
+// only / proves nothing, because / runs no query.
+const devCheck = (name, fn) => { if (!process.env.SMOKE) check(name, fn) }
+
 check('index lists both routes', async () => {
   const res = await fetch(`${BASE}/`)
   assert.strictEqual(res.status, 200)
@@ -43,13 +53,13 @@ check('csv has the expected columns', async () => {
   assert.strictEqual(header.trim(), 'POSID;RYEAR;TSL;XD_tal;PSP5;TXTMD;SGTXT')
 })
 
-check(`csv returns all ${SEEDED_ROWS} seeded rows`, async () => {
+devCheck(`csv returns all ${SEEDED_ROWS} seeded rows`, async () => {
   const text = await (await fetch(`${BASE}/posidryeartsl.csv`)).text()
   const rows = text.trim().split('\n').slice(1)
   assert.strictEqual(rows.length, SEEDED_ROWS)
 })
 
-check('json returns the same rows as objects', async () => {
+devCheck('json returns the same rows as objects', async () => {
   const body = await (await fetch(`${BASE}/posidryeartsl.json`)).json()
   assert.strictEqual(body.length, SEEDED_ROWS)
   assert.deepStrictEqual(
@@ -83,7 +93,7 @@ const FALLBACK_CACHE = path.join(__dirname, 'results', 'always_fails.json')
 const CACHED_ROWS = [{ POSID: 'cached', TSL: 1 }]
 const CACHED_AT = new Date('2020-01-02T03:04:05.000Z')
 
-check('a failing query is served from the cache', async () => {
+devCheck('a failing query is served from the cache', async () => {
   fs.writeFileSync(FALLBACK_CACHE, JSON.stringify(CACHED_ROWS))
   fs.utimesSync(FALLBACK_CACHE, CACHED_AT, CACHED_AT)
   // The app runs in another container, so the bind mount can take a moment to
@@ -103,7 +113,7 @@ check('a failing query is served from the cache', async () => {
   assert.strictEqual(res.headers.get('x-musikcsv-source'), 'cache')
 })
 
-check('a failing query without a cache is a 500', async () => {
+devCheck('a failing query without a cache is a 500', async () => {
   fs.rmSync(FALLBACK_CACHE, { force: true })
   // A deleted file takes as long to reach the other container as a new one.
   let res = await fetch(`${BASE}/always_fails.json`)
@@ -120,7 +130,7 @@ check('a failing query without a cache is a 500', async () => {
 // one rather than a second container.
 const WRONG_SERVER_CACHE = path.join(__dirname, 'results', 'wrong_server.json')
 
-check('a named connection does not borrow another connection pool', async () => {
+devCheck('a named connection does not borrow another connection pool', async () => {
   fs.rmSync(WRONG_SERVER_CACHE, { force: true })
   // Open the mssql pool first - that is the pool the old code handed out to
   // every later connection name.
