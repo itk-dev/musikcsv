@@ -15,15 +15,14 @@ Releases are git tags, deployed with `task deploy <tag>`.
 - [PR-31](https://github.com/itk-dev/musikcsv/pull/31) -
   This changelog
 - [PR-30](https://github.com/itk-dev/musikcsv/pull/30) -
-  Deployment guide: host, config handling, deploying by tag, verifying and
-  rolling back
+  Deployment guide: config handling, deploying by tag, verifying and
+  rolling back, and `.gitignore` covers backups of `config.js`
 - [PR-28](https://github.com/itk-dev/musikcsv/pull/28) -
   `Taskfile.yml` with `install`, `dev`, `lint`, `test` and `deploy`, moving
-  the deploy path into the repository
+  the deploy path into the repository, with a smoke test that fails on a
+  cached answer
 - [PR-27](https://github.com/itk-dev/musikcsv/pull/27) -
   Markdown and yaml linting from the shared ITK templates
-- [PR-26](https://github.com/itk-dev/musikcsv/pull/26) -
-  Service review for Leantime 8293
 - [PR-20](https://github.com/itk-dev/musikcsv/pull/20) -
   Opt-in push heartbeat to an Uptime Kuma monitor
 - [PR-17](https://github.com/itk-dev/musikcsv/pull/17) -
@@ -35,7 +34,8 @@ Releases are git tags, deployed with `task deploy <tag>`.
 ### Changed
 
 - [PR-29](https://github.com/itk-dev/musikcsv/pull/29) -
-  Production runs `node:24-slim` instead of the full image
+  Production, local development and CI run `node:24-slim` instead of the
+  full image
 - [PR-25](https://github.com/itk-dev/musikcsv/pull/25) -
   The node container runs as the deploy user (1042) instead of root
 - [PR-23](https://github.com/itk-dev/musikcsv/pull/23) -
