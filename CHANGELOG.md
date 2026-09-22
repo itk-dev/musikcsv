@@ -42,7 +42,7 @@ Releases are git tags, deployed with `task deploy <tag>`.
   Traefik routes straight to node, and the app trusts the forwarded headers
   it sets
 - [PR-21](https://github.com/itk-dev/musikcsv/pull/21) -
-  Upgraded to node 24 and mssql 11
+  Upgraded to node 24 and mssql 11, and express to the latest 4.x
 
 ### Fixed
 
