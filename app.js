@@ -8,12 +8,18 @@ const app = express()
 
 const config = require('./config')
 
-// One line per request: method, path, status, duration, row count.
+// One line per request: method, path, status, duration, row count, client ip.
 app.use((req, res, next) => {
   const start = Date.now()
   res.on('finish', () => {
     const ms = Date.now() - start
-    console.log(`req ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms rows=${res.locals.rows === undefined ? '-' : res.locals.rows}`)
+    console.log(`req ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms rows=${res.locals.rows === undefined ? '-' : res.locals.rows} ip=${req.ip}`)
+  })
+  // 'finish' never fires when the client gives up before the response is sent.
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      console.log(`req ${req.method} ${req.originalUrl} aborted after ${Date.now() - start}ms ip=${req.ip}`)
+    }
   })
   next()
 })
