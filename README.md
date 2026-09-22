@@ -26,6 +26,43 @@ returned 500. `SMOKE=1 node test.js` drops the checks that need the seeded
 database and keeps the ones that query the real one, and fails if the answer
 came from the cache rather than a fresh query.
 
+## Deployment
+
+Production is `srvwebitk01`, in `~/www/musikcsv/htdocs`. Releases are git tags.
+
+```sh
+ssh srvwebitk01
+cd ~/www/musikcsv/htdocs
+task deploy TAG=1.2.3
+```
+
+That fetches the tags, checks out `TAG`, `reset --hard`, pulls the images,
+installs, brings the stack up, restarts it and runs the smoke test. Rolling
+back is the same command with the previous tag.
+
+Verify afterwards — the smoke test covers both, but by hand:
+
+- `/` lists both routes, `posidryeartsl` and `posidryeartsl_old`.
+- `/posidryeartsl.csv` answers 200, and its `content-created-at` header is
+  from the deploy, not hours old. A stale timestamp means the route is being
+  served from `results/posidryeartsl.json` instead of the database.
+
+### The compose project on that server is `htdocs`
+
+`.env.docker.local` sets no project name, so compose falls back to the
+directory name. The committed `.env` sets `COMPOSE_PROJECT_NAME=musikcsv`, so
+bare `docker compose` in that directory resolves the `musikcsv` project and
+reports zero containers on a stack that is running. Always go through the
+wrapper, which passes the right env file and compose file:
+
+```sh
+docker compose --env-file .env.docker.local --file docker-compose.server.yml ps
+```
+
+`task deploy` does this for every step. For anything else on that host, use
+`idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)), or
+address the container by name: `docker exec -i htdocs-node-1 …`.
+
 ## Installation
 
 Install node dependencies:
