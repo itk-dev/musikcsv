@@ -117,3 +117,15 @@ app.get('/', (req, res) => {
 const port = config.port || 3000
 const appName = config.appName || 'musikcsv'
 app.listen(port, () => console.log(`${appName} listening on port ${port}!`))
+
+// Log why the process went away. Without this, a crash or a container stop is
+// indistinguishable from the app simply vanishing.
+const logExit = (cause, code, err) => {
+  console.error(`exit cause=${cause}${err === undefined ? '' : ' ' + (err && err.stack ? err.stack : err)}`)
+  process.exit(code)
+}
+
+process.on('uncaughtException', err => logExit('uncaughtException', 1, err))
+process.on('unhandledRejection', err => logExit('unhandledRejection', 1, err))
+process.on('SIGTERM', () => logExit('SIGTERM', 0))
+process.on('SIGINT', () => logExit('SIGINT', 0))
