@@ -1,5 +1,7 @@
 node_modules/
 config.js
+config.js.*
+!config.js.dist
 .env*.local
 
 # Dumps of production data. Real figures from Musikhuset's ledger - never

@@ -70,10 +70,7 @@ credentials the application has — the service account for the production
 database. `git checkout` and `reset --hard` leave it alone because
 `.gitignore` covers it.
 
-Backups of it belong outside the checkout. A `config.js.bck` was found in
-`~/www/musikcsv/htdocs`, untracked and not matched by `.gitignore`: one
-`git add .` from committing a service account password. Copy it to
-`~/config.js.<date>` instead, outside the repository.
+Backups of it must not live in the checkout.
 
 The database it points at is described under [The local database is not the
 production database](#the-local-database-is-not-the-production-database):
