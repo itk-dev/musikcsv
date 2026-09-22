@@ -49,6 +49,9 @@ check('csv has the expected columns', async () => {
   assert.match(res.headers.get('content-type'), /text\/csv/)
   assert.ok(res.headers.get('content-created-at'), 'content-created-at header missing')
   assert.strictEqual(res.headers.get('x-musikcsv-source'), 'query', 'served from the cache, not the database')
+  // A cached answer passes every shape check below, so also demand a fresh one.
+  const age = Date.now() - new Date(res.headers.get('content-created-at')).getTime()
+  assert.ok(age < 60000, `content-created-at is ${Math.round(age / 1000)}s old, not fresh from the database`)
   const [header] = (await res.text()).split('\n')
   assert.strictEqual(header.trim(), 'POSID;RYEAR;TSL;XD_tal;PSP5;TXTMD;SGTXT')
 })
