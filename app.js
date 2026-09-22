@@ -75,7 +75,11 @@ const getPool = name => {
   let pool = pools.get(name)
 
   if (!pool) {
-    pool = new sql.ConnectionPool(config.connections[name]).connect()
+    const p = new sql.ConnectionPool(config.connections[name])
+    // mssql re-emits some connection errors on the pool, and an 'error' event
+    // with no listener throws.
+    p.on('error', err => console.error(`err pool=${name} ${err.message}`))
+    pool = p.connect()
     // Drop a pool that never connected, so the next request tries again
     // instead of awaiting the same rejected promise forever.
     pool.catch(() => pools.delete(name))
