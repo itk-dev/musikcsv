@@ -100,7 +100,12 @@ check('a failing query is served from the cache', async () => {
 
 check('a failing query without a cache is a 500', async () => {
   fs.rmSync(FALLBACK_CACHE, { force: true })
-  const res = await fetch(`${BASE}/always_fails.json`)
+  // A deleted file takes as long to reach the other container as a new one.
+  let res = await fetch(`${BASE}/always_fails.json`)
+  for (let i = 0; i < 10 && res.status !== 500; i++) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    res = await fetch(`${BASE}/always_fails.json`)
+  }
   assert.strictEqual(res.status, 500)
 })
 
