@@ -30,6 +30,7 @@ check('csv has the expected columns', async () => {
   assert.strictEqual(res.status, 200)
   assert.match(res.headers.get('content-type'), /text\/csv/)
   assert.ok(res.headers.get('content-created-at'), 'content-created-at header missing')
+  assert.strictEqual(res.headers.get('x-musikcsv-source'), 'query', 'served from the cache, not the database')
   const [header] = (await res.text()).split('\n')
   assert.strictEqual(header.trim(), 'POSID;RYEAR;TSL;XD_tal;PSP5;TXTMD;SGTXT')
 })
@@ -94,6 +95,7 @@ check('a failing query is served from the cache', async () => {
     CACHED_AT.toISOString(),
     'content-created-at does not report the age of the cache'
   )
+  assert.strictEqual(res.headers.get('x-musikcsv-source'), 'cache')
 })
 
 check('a failing query without a cache is a 500', async () => {

@@ -56,7 +56,7 @@ const readCachedResult = (route, reason) => {
     const data = JSON.parse(fs.readFileSync(resultFilename))
     const ageSeconds = Math.round((Date.now() - createdAt.getTime()) / 1000)
     console.error(`warn fallback route=${route} reason=${reason} age=${ageSeconds}s file=${resultFilename}`)
-    return { data, createdAt }
+    return { data, createdAt, source: 'cache' }
   } catch (err) {
     console.error(`err no-cache route=${route} reason=${reason} ${err.message}`)
     return null
@@ -73,7 +73,7 @@ for (const [route, spec] of Object.entries(config.routes)) {
 
       if (recordset && recordset.length > 0) {
         writeResult(route, recordset)
-        result = { data: recordset, createdAt: new Date() }
+        result = { data: recordset, createdAt: new Date(), source: 'query' }
       } else {
         result = readCachedResult(route, 'empty-result')
         if (result === null) return next(new Error('Cannot get data'))
@@ -89,6 +89,8 @@ for (const [route, spec] of Object.entries(config.routes)) {
 
     // Always stated, so a stale answer is visible to the caller.
     res.header('content-created-at', result.createdAt.toISOString())
+    // Excel users never see this, but the smoke test and logs can.
+    res.header('x-musikcsv-source', result.source)
 
     if (getFormat(req.path, 'json') === 'csv') {
       csvStringify(
