@@ -28,17 +28,19 @@ came from the cache rather than a fresh query.
 
 ## Deployment
 
-Production is `srvwebitk01`, in `~/www/musikcsv/htdocs`. Releases are git tags.
+Releases are git tags.
 
 ```sh
-ssh srvwebitk01
-cd ~/www/musikcsv/htdocs
+ssh <host>
+cd <deploy path>
 task deploy TAG=1.2.3
 ```
 
 That fetches the tags, checks out `TAG`, `reset --hard`, pulls the images,
 installs, brings the stack up, restarts it and runs the smoke test. Rolling
-back is the same command with the previous tag.
+back is the same command with the previous tag, down to the first tag that
+has a `Taskfile.yml`. Older tags have none: `task deploy` would check one out
+and then have nothing to run the next deploy with.
 
 Verify afterwards — the smoke test covers both, but by hand:
 
@@ -47,21 +49,18 @@ Verify afterwards — the smoke test covers both, but by hand:
   from the deploy, not hours old. A stale timestamp means the route is being
   served from `results/posidryeartsl.json` instead of the database.
 
-### The compose project on that server is `htdocs`
+### The compose project on the server is the directory name
 
 `.env.docker.local` sets no project name, so compose falls back to the
 directory name. The committed `.env` sets `COMPOSE_PROJECT_NAME=musikcsv`, so
 bare `docker compose` in that directory resolves the `musikcsv` project and
-reports zero containers on a stack that is running. Always go through the
-wrapper, which passes the right env file and compose file:
+reports zero containers on a stack that is running. `task deploy` passes the
+right env file and compose file itself. For anything else on the server, use
+`idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)):
 
 ```sh
-docker compose --env-file .env.docker.local --file docker-compose.server.yml ps
+idc ps
 ```
-
-`task deploy` does this for every step. For anything else on that host, use
-`idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)), or
-address the container by name: `docker exec -i htdocs-node-1 …`.
 
 ### config.js
 
@@ -75,7 +74,7 @@ Backups of it must not live in the checkout.
 The database it points at is described under [The local database is not the
 production database](#the-local-database-is-not-the-production-database):
 SQL Server 2017 on Windows Server 2016, NTLM authentication through the
-`domain: 'ADM'` key.
+`domain` key.
 
 ## Installation
 
