@@ -19,8 +19,6 @@ services:
     networks:
       - app
       - frontend
-    ports:
-      - "3000"
     volumes:
       - .:/app:delegated
     labels:
