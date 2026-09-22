@@ -1,0 +1,52 @@
+# https://taskfile.dev
+#
+# Every task runs in a container. Nothing here needs node, yarn or a linter on
+# the host.
+version: "3"
+
+vars:
+  # The server stack. Replaces ~/www/musikcsv/scripts/docker-compose, which
+  # pinned /usr/local/bin/docker-compose, the v1 binary Docker dropped in 2023.
+  SERVER: docker compose --env-file .env.docker.local --file docker-compose.server.yml
+
+tasks:
+  install:
+    desc: Install node dependencies
+    cmds:
+      - docker compose run --rm node yarn install
+
+  dev:
+    desc: Start the local stack and seed the database
+    cmds:
+      - docker compose --profile db up --detach
+      - docker compose run --rm node node .docker/mssql/seed.js
+
+  lint:
+    desc: Check coding standards, markdown and yaml
+    cmds:
+      - docker compose run --rm node yarn coding-standards-check
+      - docker compose run --rm markdownlint markdownlint '**/*.md'
+      - docker compose run --rm prettier '**/*.{yml,yaml}' --check
+
+  test:
+    desc: Smoke test the local stack
+    cmds:
+      - docker compose run --rm node node test.js
+
+  deploy:
+    desc: Deploy a git tag on the server, e.g. task deploy TAG=1.2.3
+    requires:
+      vars: [TAG]
+    cmds:
+      - git fetch --tags --prune
+      - git checkout {{.TAG}}
+      - git reset --hard {{.TAG}}
+      - "{{.SERVER}} pull"
+      - "{{.SERVER}} run --rm node yarn install"
+      - "{{.SERVER}} up --detach"
+      - "{{.SERVER}} restart"
+      # The old scripts/test fetched / only, which runs no query: every data
+      # route could answer 500 and the deploy would still look healthy. SMOKE
+      # drops the checks that need the seeded database, and keeps the ones that
+      # query the real one.
+      - "{{.SERVER}} run --rm -e SMOKE=1 node node test.js"
