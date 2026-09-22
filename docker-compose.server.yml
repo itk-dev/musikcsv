@@ -33,7 +33,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
 
   node:
-    image: node:18
+    image: node:24
     restart: unless-stopped
     command: yarn start
     working_dir: /app
