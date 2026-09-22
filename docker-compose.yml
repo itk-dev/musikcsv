@@ -45,7 +45,7 @@ services:
       - mssql-data:/var/opt/mssql
 
   node:
-    image: node:18
+    image: node:24
     command: yarn start-dev
     working_dir: /app
     networks:
