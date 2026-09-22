@@ -80,7 +80,13 @@ const CACHED_AT = new Date('2020-01-02T03:04:05.000Z')
 check('a failing query is served from the cache', async () => {
   fs.writeFileSync(FALLBACK_CACHE, JSON.stringify(CACHED_ROWS))
   fs.utimesSync(FALLBACK_CACHE, CACHED_AT, CACHED_AT)
-  const res = await fetch(`${BASE}/always_fails.json`)
+  // The app runs in another container, so the bind mount can take a moment to
+  // show it the file this process just wrote.
+  let res = await fetch(`${BASE}/always_fails.json`)
+  for (let i = 0; i < 10 && res.status !== 200; i++) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    res = await fetch(`${BASE}/always_fails.json`)
+  }
   assert.strictEqual(res.status, 200)
   assert.deepStrictEqual(await res.json(), CACHED_ROWS)
   assert.strictEqual(
