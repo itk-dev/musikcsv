@@ -14,7 +14,10 @@
   },
   "nodemonConfig": {
     "ignore": [
-      "results/**"
+      "results/**",
+      "test.js",
+      ".docker/**",
+      "fixtures/**"
     ]
   },
   "scripts": {

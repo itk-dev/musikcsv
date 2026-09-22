@@ -1,0 +1,52 @@
+// Local development configuration.
+//
+//   cp config.dev.js.dist config.js
+//   docker compose --profile db up --detach
+//   docker compose run --rm node yarn install
+//   docker compose run --rm node node .docker/mssql/seed.js
+//
+// Points at the mssql container seeded with synthetic data from
+// .docker/mssql/seed.sql. No real data, no credentials worth protecting.
+
+module.exports = {
+  appName: 'musikcsv',
+  port: 3000,
+
+  connections: {
+    mssql: {
+      server: 'mssql',
+      user: 'sa',
+      password: 'Passw0rd!Local',
+      database: 'dataintegration',
+      trustServerCertificate: true
+    }
+  },
+
+  routes: {
+    posidryeartsl_old: {
+      connection: 'mssql',
+      query: `
+SELECT POSID,
+       RYEAR,
+       TSL,
+       SUBSTRING(POSID, 3, 10) AS XD_tal,
+       RIGHT(POSID, 5) AS PSP5,
+       SUBSTRING(POSID, 1, 12) AS XD_streng
+  FROM yesplan.Opusdata
+`
+    },
+    posidryeartsl: {
+      connection: 'mssql',
+      query: `
+SELECT POSID,
+       RYEAR,
+       TSL,
+       SUBSTRING(POSID, 3, 10) AS XD_tal,
+       RIGHT(POSID, 5) AS PSP5,
+       TXTMD,
+       SGTXT
+  FROM yesplan.Opusdata_ver2
+`
+    }
+  }
+}

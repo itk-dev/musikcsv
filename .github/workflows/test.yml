@@ -1,0 +1,43 @@
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # GitHub runners are amd64, so the production engine runs natively here.
+      # Locally the db profile defaults to arm64-native azure-sql-edge instead;
+      # see "The local database is not the production database" in README.md.
+      MSSQL_IMAGE: mcr.microsoft.com/mssql/server:2017-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Create the traefik network the compose file expects
+        run: docker network create frontend
+
+      - name: Configure
+        run: cp config.dev.js.dist config.js
+
+      - name: Install dependencies
+        run: docker compose run --rm node yarn install
+
+      - name: Coding standards
+        run: docker compose run --rm node yarn coding-standards-check
+
+      - name: Start the stack
+        run: docker compose --profile db up --detach
+
+      - name: Seed the database
+        run: docker compose run --rm node node .docker/mssql/seed.js
+
+      - name: Smoke test
+        run: docker compose run --rm node node test.js
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose --profile db logs --tail 100
