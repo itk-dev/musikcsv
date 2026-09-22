@@ -3,7 +3,8 @@
 ## Tasks
 
 Everything goes through [go-task](https://taskfile.dev), and everything
-runs in a container:
+except `task` itself runs in a container. `task` has to be installed on the
+host, the server included:
 
 ```sh
 task install   # yarn install in the node container
@@ -13,15 +14,17 @@ task test      # smoke test the running stack
 ```
 
 `task deploy TAG=1.2.3` is the deploy on the server: fetch, check out the tag,
-`reset --hard`, pull the images, install, `up --detach`, restart, then the smoke
-test. It uses `docker-compose.server.yml` and `.env.docker.local`. It replaces
-the scripts in `~/www/musikcsv/scripts/`, which lived outside version control
-and pinned the unsupported `docker-compose` v1 binary.
+`reset --hard`, pull the images, install, `up --detach --remove-orphans`,
+restart, then the smoke test. It uses `docker-compose.server.yml` and
+`.env.docker.local`. It replaces the scripts in `scripts/` on the server, which
+lived outside version control and pinned the unsupported `docker-compose` v1
+binary.
 
 The last step is the point of the change. The old `scripts/test` fetched `/`,
 which runs no query, so it reported a healthy deploy while every data route
 returned 500. `SMOKE=1 node test.js` drops the checks that need the seeded
-database and keeps the ones that query the real one.
+database and keeps the ones that query the real one, and fails if the answer
+came from the cache rather than a fresh query.
 
 ## Installation
 
