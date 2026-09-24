@@ -35,6 +35,57 @@ returned 500. `SMOKE=1 node test.js` drops the checks that need the seeded
 database and keeps the ones that query the real one, and fails if the answer
 came from the cache rather than a fresh query.
 
+## Deployment
+
+Releases are git tags.
+
+```sh
+ssh <host>
+cd <deploy path>
+task deploy TAG=1.2.3
+```
+
+That fetches the tags, checks out `TAG`, `reset --hard`, pulls the images,
+installs, brings the stack up, restarts it and runs the smoke test. Rolling
+back is the same command with the previous tag, down to the first tag that
+has a `Taskfile.yml`. Older tags have none: `task deploy` would check one out
+and then have nothing to run the next deploy with.
+
+Verify afterwards — the smoke test covers both, but by hand:
+
+- `/` lists both routes, `posidryeartsl` and `posidryeartsl_old`.
+- `/posidryeartsl.csv` answers 200, and its `content-created-at` header is
+  from the deploy, not hours old. A stale timestamp means the route is being
+  served from `results/posidryeartsl.json` instead of the database.
+
+### The compose project on the server is the directory name
+
+`.env.docker.local` sets no project name, so compose falls back to the
+directory name. The committed `.env` sets `COMPOSE_PROJECT_NAME=musikcsv`, so
+bare `docker compose` in that directory resolves the `musikcsv` project and
+reports zero containers on a stack that is running. `task deploy` runs through
+`itkdev-docker-compose-server`, which uses `.env.docker.local` and the files in
+its `COMPOSE_FILES` (see [Tasks](#tasks)). For anything else on the server, use
+`idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)):
+
+```sh
+idc ps
+```
+
+### config.js
+
+`config.js` is not in git. It exists only on the server, and it holds the only
+credentials the application has — the service account for the production
+database. `git checkout` and `reset --hard` leave it alone because
+`.gitignore` covers it.
+
+Backups of it must not live in the checkout.
+
+The database it points at is described under [The local database is not the
+production database](#the-local-database-is-not-the-production-database):
+SQL Server 2017 on Windows Server 2016, NTLM authentication through the
+`domain` key.
+
 ## Installation
 
 Install node dependencies:
