@@ -54,8 +54,9 @@ Verify afterwards — the smoke test covers both, but by hand:
 `.env.docker.local` sets no project name, so compose falls back to the
 directory name. The committed `.env` sets `COMPOSE_PROJECT_NAME=musikcsv`, so
 bare `docker compose` in that directory resolves the `musikcsv` project and
-reports zero containers on a stack that is running. `task deploy` passes the
-right env file and compose file itself. For anything else on the server, use
+reports zero containers on a stack that is running. `task deploy` runs through
+`itkdev-docker-compose-server`, which uses `.env.docker.local` and the files in
+its `COMPOSE_FILES` (see [Tasks](#tasks)). For anything else on the server, use
 `idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)):
 
 ```sh
