@@ -28,10 +28,6 @@ services:
   node:
     image: node:24
     command: yarn start-dev
-    # 1042 is the deploy user in ITK's images, so the tree on the server is
-    # owned by it. It has no passwd entry in the node image, so HOME must be
-    # set or tools that cache under it fail with EACCES.
-    user: ${NODE_UID_GID:-1042:1042}
     working_dir: /app
     networks:
       - app
@@ -40,7 +36,6 @@ services:
       - "127.0.0.1::3000"
     environment:
       - NODE_ENV=development
-      - HOME=/tmp
     volumes:
       - .:/app:delegated
     labels:
