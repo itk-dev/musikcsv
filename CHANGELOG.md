@@ -13,7 +13,7 @@ Releases are git tags, deployed with `task deploy TAG=<tag>`.
 ### Added
 
 - [PR-31](https://github.com/itk-dev/musikcsv/pull/31) -
-  This changelog
+  This changelog, and a check that every pull request updates it
 - [PR-30](https://github.com/itk-dev/musikcsv/pull/30) -
   Deployment guide: config handling, deploying by tag, verifying and
   rolling back, and `.gitignore` covers backups of `config.js`
