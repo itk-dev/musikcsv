@@ -18,6 +18,31 @@ Restart the node container after editing `config.js` to pick up the new configur
 docker compose restart node
 ```
 
+## Uptime monitor
+
+The app can push a heartbeat to an [Uptime Kuma](https://uptime.kuma.pet/)
+push monitor. The monitor cannot reach the server, so the check is inverted:
+the app calls out on a timer, and Kuma alerts when the calls stop. It is off
+unless `heartbeatUrl` is set in `config.js`:
+
+```js
+heartbeatUrl: 'https://uptime.example.com/api/push/abc123',
+heartbeatIntervalMs: 60000, // optional, defaults to 60000
+```
+
+Paste the push URL as Kuma shows it. The app sets `status` and `msg` itself,
+so leaving `?status=up&msg=OK&ping=` on it is fine. Each push reports the process uptime
+as the message, which makes a restart visible in Kuma's history even when it
+recovered too fast to alert.
+
+Set the monitor's heartbeat interval longer than `heartbeatIntervalMs`, with a
+retry or two, or a restart pages.
+
+A failing push never affects the app. The first failure is logged as
+`err heartbeat ...` and recovery as `heartbeat ok`; nothing in between, so a
+wrong URL or an unreachable monitor shows up once in the node log
+(`idc logs node` on the server) rather than every minute.
+
 ## Local development
 
 The `db` profile adds a SQL Server container seeded with synthetic data, so the
