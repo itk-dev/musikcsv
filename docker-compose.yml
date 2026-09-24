@@ -29,10 +29,6 @@ services:
     # Same image as production, so the tests exercise what is deployed.
     image: node:24-slim
     command: yarn start-dev
-    # 1042 is the deploy user in ITK's images, so the tree on the server is
-    # owned by it. It has no passwd entry in the node image, so HOME must be
-    # set or tools that cache under it fail with EACCES.
-    user: ${NODE_UID_GID:-1042:1042}
     working_dir: /app
     networks:
       - app
@@ -41,7 +37,6 @@ services:
       - "127.0.0.1::3000"
     environment:
       - NODE_ENV=development
-      - HOME=/tmp
     volumes:
       - .:/app:delegated
     labels:
@@ -52,6 +47,26 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
       # - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=redirect-to-https"
       # - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  markdownlint:
+    # Opt-in: docker compose --profile dev run --rm markdownlint markdownlint '**/*.md'
+    image: itkdev/markdownlint
+    profiles:
+      - dev
+    volumes:
+      - ./:/md
+
+  prettier:
+    # Opt-in: docker compose --profile dev run --rm prettier '**/*.{yml,yaml}' --check
+    # Prettier does not (yet, fcf.
+    # https://github.com/prettier/prettier/issues/15206) have an official
+    # docker image.
+    # https://hub.docker.com/r/jauderho/prettier is good candidate (cf. https://hub.docker.com/search?q=prettier&sort=updated_at&order=desc)
+    image: jauderho/prettier
+    profiles:
+      - dev
+    volumes:
+      - ./:/work
 
 volumes:
   mssql-data:

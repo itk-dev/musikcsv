@@ -13,12 +13,21 @@ task lint      # standard, markdownlint and prettier
 task test      # smoke test the running stack
 ```
 
+The tasks run `docker compose`; set `TASK_DOCKER_COMPOSE` to use another
+command, e.g. `TASK_DOCKER_COMPOSE=idc task install`.
+
 `task deploy TAG=1.2.3` is the deploy on the server: fetch, check out the tag,
 `reset --hard`, pull the images, install, `up --detach --remove-orphans`,
-restart, then the smoke test. It uses `docker-compose.server.yml` and
-`.env.docker.local`. It replaces the scripts in `scripts/` on the server, which
-lived outside version control and pinned the unsupported `docker-compose` v1
-binary.
+restart, then the smoke test. It runs through `itkdev-docker-compose-server`,
+which is installed on ITK's docker servers and reads the compose files from
+`COMPOSE_FILES` in `.env.docker.local`, so that file needs:
+
+```sh
+COMPOSE_FILES=docker-compose.server.yml
+```
+
+It replaces the scripts in `scripts/` on the server, which lived outside
+version control and pinned the unsupported `docker-compose` v1 binary.
 
 The last step is the point of the change. The old `scripts/test` fetched `/`,
 which runs no query, so it reported a healthy deploy while every data route
@@ -44,6 +53,41 @@ Restart the node container after editing `config.js` to pick up the new configur
 docker compose restart node
 ```
 
+## Uptime monitor
+
+The app can push a heartbeat to an [Uptime Kuma](https://uptime.kuma.pet/)
+push monitor. The monitor cannot reach the server, so the check is inverted:
+the app calls out on a timer, and Kuma alerts when the calls stop. It is off
+unless `heartbeatUrl` is set in `config.js`:
+
+```js
+heartbeatUrl: 'https://uptime.example.com/api/push/abc123',
+heartbeatIntervalMs: 60000, // optional, defaults to 60000
+```
+
+Paste the push URL as Kuma shows it. The app sets `status` and `msg` itself,
+so leaving `?status=up&msg=OK&ping=` on it is fine. Each push reports the process uptime
+as the message, which makes a restart visible in Kuma's history even when it
+recovered too fast to alert.
+
+A push monitor has no request timeout; its **Heartbeat Interval** is the
+timeout. Kuma marks the monitor down when no push has arrived within it. Set it
+to at least **3 × `heartbeatIntervalMs`**, with **1 retry**, so 180 seconds for
+the default 60 seconds.
+
+The factor comes from the longest normal gap between two pushes. The first
+push after a start is sent one full interval later, not at once, so a restart
+right before a push is due leaves a gap of about two intervals plus the
+restart time. One lost push, a network blip or a slow monitor, gives the same
+two intervals. Three covers either with room to spare, and the retry means a
+single late push is marked pending rather than paging. At 2 × or less, a
+deploy can page.
+
+A failing push never affects the app. The first failure is logged as
+`err heartbeat ...` and recovery as `heartbeat ok`; nothing in between, so a
+wrong URL or an unreachable monitor shows up once in the node log
+(`idc logs node` on the server) rather than every minute.
+
 ## Local development
 
 The `db` profile adds a SQL Server container seeded with synthetic data, so the
@@ -58,14 +102,6 @@ docker compose run --rm node node .docker/mssql/seed.js
 
 The seed script waits for the database to accept connections, so it can be run
 immediately after `up`.
-
-The node container runs as uid 1042 (the deploy user on the server). On Linux,
-where the bind mount keeps host ownership, run it as yourself instead so it can
-write `node_modules` and `results`:
-
-```sh
-export NODE_UID_GID=$(id -u):$(id -g)
-```
 
 Data comes from `.docker/mssql/seed.sql`: 500 synthetic rows matching the
 production schema, including negative amounts, `NULL` in `SGTXT` and Danish

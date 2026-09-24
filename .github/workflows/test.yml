@@ -23,14 +23,6 @@ jobs:
       - name: Configure
         run: cp config.dev.js.dist config.js
 
-      # The runner owns the checkout as uid 1001; the node container runs as the
-      # deploy uid 1042 (ITK convention) and writes into the bind mount. Only
-      # hand over what it writes, so the runner can still clean up .git.
-      - name: Hand node_modules and results to the node user
-        run: |
-          mkdir -p node_modules
-          sudo chown -R 1042:1042 node_modules results
-
       - name: Install dependencies
         run: docker compose run --rm node yarn install
 
