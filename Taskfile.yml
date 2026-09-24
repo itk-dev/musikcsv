@@ -44,7 +44,10 @@ tasks:
       - git checkout --force {{.TAG}}
       - git reset --hard {{.TAG}}
       - "{{.SERVER}} pull"
-      - "{{.SERVER}} run --rm node yarn install"
+      # NODE_ENV=production in the server compose already skips dev
+      # dependencies; --production says so here. --frozen-lockfile fails the
+      # deploy instead of rewriting yarn.lock on the server.
+      - "{{.SERVER}} run --rm node yarn install --production --frozen-lockfile"
       # --remove-orphans: a service dropped from the compose file (nginx) keeps
       # running with its traefik labels otherwise.
       - "{{.SERVER}} up --detach --remove-orphans"
