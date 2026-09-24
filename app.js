@@ -8,6 +8,22 @@ const app = express()
 
 const config = require('./config')
 
+// One line per request: method, path, status, duration, row count, client ip.
+app.use((req, res, next) => {
+  const start = Date.now()
+  res.on('finish', () => {
+    const ms = Date.now() - start
+    console.log(`req ${req.method} ${req.originalUrl} ${res.statusCode} ${ms}ms rows=${res.locals.rows === undefined ? '-' : res.locals.rows} ip=${req.ip}`)
+  })
+  // 'finish' never fires when the client gives up before the response is sent.
+  res.on('close', () => {
+    if (!res.writableFinished) {
+      console.log(`req ${req.method} ${req.originalUrl} aborted after ${Date.now() - start}ms ip=${req.ip}`)
+    }
+  })
+  next()
+})
+
 const getFormat = (path, defaultValue) => {
   const match = /\.([a-z]+)$/g.exec(path)
   return match ? match[1] : defaultValue
@@ -33,12 +49,16 @@ for (const [route, spec] of Object.entries(config.routes)) {
             const content = fs.readFileSync(resultFilename)
             data = JSON.parse(content)
             createdAt = fs.statSync(resultFilename).mtime
+            const ageSeconds = Math.round((Date.now() - createdAt.getTime()) / 1000)
+            console.error(`warn fallback route=${route} reason=empty-result age=${ageSeconds}s file=${resultFilename}`)
           } catch (exception) {
             throw new Error('Cannot get data')
           }
         } else {
           fs.writeFileSync(resultFilename, JSON.stringify(data))
         }
+
+        res.locals.rows = data.length
 
         const format = getFormat(req.path, 'json')
 
@@ -69,6 +89,8 @@ for (const [route, spec] of Object.entries(config.routes)) {
         }
       })
       .catch(err => {
+        console.error(`err ${req.method} ${req.originalUrl} ${err.message}`)
+        console.error(err.stack)
         next(err)
       })
   })
@@ -101,3 +123,15 @@ app.get('/', (req, res) => {
 const port = config.port || 3000
 const appName = config.appName || 'musikcsv'
 app.listen(port, () => console.log(`${appName} listening on port ${port}!`))
+
+// Log why the process went away. Without this, a crash or a container stop is
+// indistinguishable from the app simply vanishing.
+const logExit = (cause, code, err) => {
+  console.error(`exit cause=${cause}${err === undefined ? '' : ' ' + (err && err.stack ? err.stack : err)}`)
+  process.exit(code)
+}
+
+process.on('uncaughtException', err => logExit('uncaughtException', 1, err))
+process.on('unhandledRejection', err => logExit('unhandledRejection', 1, err))
+process.on('SIGTERM', () => logExit('SIGTERM', 0))
+process.on('SIGINT', () => logExit('SIGINT', 0))
