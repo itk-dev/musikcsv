@@ -25,10 +25,28 @@ module.exports = {
       password: 'Passw0rd!Local',
       database: 'dataintegration',
       trustServerCertificate: true
+    },
+
+    // A second connection, pointing at a server that does not exist. test.js
+    // uses it to prove a named connection reaches its own server and not
+    // whichever one a pool was opened against first.
+    other_server: {
+      server: 'no-such-server',
+      user: 'sa',
+      password: 'Passw0rd!Local',
+      database: 'dataintegration',
+      trustServerCertificate: true,
+      connectionTimeout: 5000
     }
   },
 
   routes: {
+    // A query that succeeds on any reachable server, so the route can only
+    // answer if it really talked to other_server.
+    wrong_server: {
+      connection: 'other_server',
+      query: 'SELECT 1 AS n'
+    },
     // Always fails. test.js uses it to exercise the cache fallback on error.
     always_fails: {
       connection: 'mssql',
