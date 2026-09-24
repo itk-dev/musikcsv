@@ -1,3 +1,8 @@
 node_modules/
 config.js
 .env*.local
+
+# Dumps of production data. Real figures from Musikhuset's ledger - never
+# commit these. Synthetic equivalents live in .docker/mssql/seed.sql.
+/fixtures/
+/fixtures.json
