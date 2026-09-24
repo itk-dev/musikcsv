@@ -128,7 +128,7 @@ If that major version changes, update the pin in
 ## Test the data
 
 ```sh
-open "http://$(docker compose port nginx 8080)"
+open "http://$(docker compose port node 3000)"
 ```
 
 ## Coding standards
