@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-Releases are git tags, deployed with `task deploy <tag>`.
+Releases are git tags, deployed with `task deploy TAG=<tag>`.
 
 ## [Unreleased]
 
@@ -37,7 +37,8 @@ Releases are git tags, deployed with `task deploy <tag>`.
   Production, local development and CI run `node:24-slim` instead of the
   full image
 - [PR-25](https://github.com/itk-dev/musikcsv/pull/25) -
-  The node container runs as the deploy user (1042) instead of root
+  On the server, the node container runs as the deploy user (1042) instead
+  of root
 - [PR-23](https://github.com/itk-dev/musikcsv/pull/23) -
   Traefik routes straight to node, and the app trusts the forwarded headers
   it sets
