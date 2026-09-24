@@ -1,6 +1,4 @@
 # itk-version: 2.0.1
-version: "3"
-
 networks:
   frontend:
     external: true
@@ -19,8 +17,6 @@ services:
     networks:
       - app
       - frontend
-    ports:
-      - "3000"
     volumes:
       - .:/app:delegated
     labels:
