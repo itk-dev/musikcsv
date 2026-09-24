@@ -8,7 +8,10 @@ networks:
 
 services:
   node:
-    image: node:24
+    # Production only runs `yarn install` and `yarn start`, so it needs no
+    # toolchain: slim is 332 MB against 1546 MB, same Node, and still ships
+    # yarn 1.22.22. Local development and CI use the same image.
+    image: node:24-slim
     restart: unless-stopped
     command: yarn start
     # 1042 is the deploy user in ITK's images, so the tree on the server is

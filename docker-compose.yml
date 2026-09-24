@@ -26,7 +26,8 @@ services:
       - mssql-data:/var/opt/mssql
 
   node:
-    image: node:24
+    # Same image as production, so the tests exercise what is deployed.
+    image: node:24-slim
     command: yarn start-dev
     working_dir: /app
     networks:
