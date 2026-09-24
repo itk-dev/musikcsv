@@ -55,15 +55,12 @@ check('danish characters survive the csv encoding', async () => {
   assert.match(text, /[æøåÆØÅ]/, 'no danish characters in output - encoding lost')
 })
 
-check('positive decimals use a comma for excel', async () => {
+check('decimal amounts use a comma for excel, negatives included', async () => {
   const text = await (await fetch(`${BASE}/posidryeartsl.csv`)).text()
   const amounts = text.trim().split('\n').slice(1).map(line => line.split(';')[2])
-  const positives = amounts.filter(a => !a.startsWith('-') && a.includes(','))
-  assert.ok(positives.length > 0, 'no positive decimal was converted to a comma')
-  assert.ok(
-    amounts.every(a => !(!a.startsWith('-') && a.includes('.'))),
-    'a positive decimal kept its period'
-  )
+  assert.ok(amounts.some(a => !a.startsWith('-') && a.includes(',')), 'no positive decimal got a comma')
+  assert.ok(amounts.some(a => a.startsWith('-') && a.includes(',')), 'no negative decimal got a comma')
+  assert.deepStrictEqual(amounts.filter(a => a.includes('.')), [], 'a decimal amount kept its period')
 })
 
 check('the old route still serves its own columns', async () => {
