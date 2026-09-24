@@ -1,5 +1,40 @@
 # musikcsv
 
+## Tasks
+
+Everything goes through [go-task](https://taskfile.dev), and everything
+except `task` itself runs in a container. `task` has to be installed on the
+host, the server included:
+
+```sh
+task install   # yarn install in the node container
+task dev       # start the stack with the db profile and seed it
+task lint      # standard, markdownlint and prettier
+task test      # smoke test the running stack
+```
+
+The tasks run `docker compose`; set `TASK_DOCKER_COMPOSE` to use another
+command, e.g. `TASK_DOCKER_COMPOSE=idc task install`.
+
+`task deploy TAG=1.2.3` is the deploy on the server: fetch, check out the tag,
+`reset --hard`, pull the images, install, `up --detach --remove-orphans`,
+restart, then the smoke test. It runs through `itkdev-docker-compose-server`,
+which is installed on ITK's docker servers and reads the compose files from
+`COMPOSE_FILES` in `.env.docker.local`, so that file needs:
+
+```sh
+COMPOSE_FILES=docker-compose.server.yml
+```
+
+It replaces the scripts in `scripts/` on the server, which lived outside
+version control and pinned the unsupported `docker-compose` v1 binary.
+
+The last step is the point of the change. The old `scripts/test` fetched `/`,
+which runs no query, so it reported a healthy deploy while every data route
+returned 500. `SMOKE=1 node test.js` drops the checks that need the seeded
+database and keeps the ones that query the real one, and fails if the answer
+came from the cache rather than a fresh query.
+
 ## Installation
 
 Install node dependencies:
