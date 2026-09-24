@@ -13,12 +13,21 @@ task lint      # standard, markdownlint and prettier
 task test      # smoke test the running stack
 ```
 
+The tasks run `docker compose`; set `TASK_DOCKER_COMPOSE` to use another
+command, e.g. `TASK_DOCKER_COMPOSE=idc task install`.
+
 `task deploy TAG=1.2.3` is the deploy on the server: fetch, check out the tag,
 `reset --hard`, pull the images, install, `up --detach --remove-orphans`,
-restart, then the smoke test. It uses `docker-compose.server.yml` and
-`.env.docker.local`. It replaces the scripts in `scripts/` on the server, which
-lived outside version control and pinned the unsupported `docker-compose` v1
-binary.
+restart, then the smoke test. It runs through `itkdev-docker-compose-server`,
+which is installed on ITK's docker servers and reads the compose files from
+`COMPOSE_FILES` in `.env.docker.local`, so that file needs:
+
+```sh
+COMPOSE_FILES=docker-compose.server.yml
+```
+
+It replaces the scripts in `scripts/` on the server, which lived outside
+version control and pinned the unsupported `docker-compose` v1 binary.
 
 The last step is the point of the change. The old `scripts/test` fetched `/`,
 which runs no query, so it reported a healthy deploy while every data route

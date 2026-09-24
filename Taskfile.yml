@@ -5,55 +5,58 @@
 version: "3"
 
 vars:
-  # The server stack. Replaces scripts/docker-compose on the server, which
-  # pinned /usr/local/bin/docker-compose, the v1 binary Docker dropped in 2023.
-  SERVER: docker compose --env-file .env.docker.local --file docker-compose.server.yml
+  DOCKER_COMPOSE: '{{.TASK_DOCKER_COMPOSE | default "docker compose"}}'
 
 tasks:
   install:
     desc: Install node dependencies
     cmds:
-      - docker compose run --rm node yarn install
+      - "{{.DOCKER_COMPOSE}} run --rm node yarn install"
 
   dev:
     desc: Start the local stack and seed the database
     cmds:
-      - docker compose --profile db up --detach
-      - docker compose run --rm node node .docker/mssql/seed.js
+      - "{{.DOCKER_COMPOSE}} --profile db up --detach"
+      - "{{.DOCKER_COMPOSE}} run --rm node node .docker/mssql/seed.js"
 
   lint:
     desc: Check coding standards, markdown and yaml
     cmds:
-      - docker compose run --rm node yarn coding-standards-check
-      - docker compose run --rm markdownlint markdownlint '**/*.md'
-      - docker compose run --rm prettier '**/*.{yml,yaml}' --check
+      - "{{.DOCKER_COMPOSE}} run --rm node yarn coding-standards-check"
+      - "{{.DOCKER_COMPOSE}} run --rm markdownlint markdownlint '**/*.md'"
+      - "{{.DOCKER_COMPOSE}} run --rm prettier '**/*.{yml,yaml}' --check"
 
   test:
     desc: Smoke test the local stack
     cmds:
-      - docker compose run --rm node node test.js
+      - "{{.DOCKER_COMPOSE}} run --rm node node test.js"
 
   deploy:
     desc: Deploy a git tag on the server, e.g. task deploy TAG=1.2.3
     requires:
       vars: [TAG]
+    vars:
+      # ITK's server wrapper: reads COMPOSE_FILES from .env.docker.local and
+      # passes the rest to docker compose. Replaces scripts/docker-compose on
+      # the server, which pinned the v1 binary Docker dropped in 2023.
+      DOCKER_COMPOSE: itkdev-docker-compose-server
     cmds:
       - git fetch --tags --prune
       # --force: the server has had hand edits, and a plain checkout aborts on
       # them before reset --hard is reached.
       - git checkout --force {{.TAG}}
       - git reset --hard {{.TAG}}
-      - "{{.SERVER}} pull"
+      - "{{.DOCKER_COMPOSE}} pull"
       # NODE_ENV=production in the server compose already skips dev
       # dependencies; --production says so here. --frozen-lockfile fails the
       # deploy instead of rewriting yarn.lock on the server.
-      - "{{.SERVER}} run --rm node yarn install --production --frozen-lockfile"
+      - "{{.DOCKER_COMPOSE}} run --rm node yarn install --production --frozen-lockfile"
       # --remove-orphans: a service dropped from the compose file (nginx) keeps
       # running with its traefik labels otherwise.
-      - "{{.SERVER}} up --detach --remove-orphans"
-      - "{{.SERVER}} restart"
+      - "{{.DOCKER_COMPOSE}} up --detach --remove-orphans"
+      - "{{.DOCKER_COMPOSE}} restart"
       # The old scripts/test fetched / only, which runs no query: every data
       # route could answer 500 and the deploy would still look healthy. SMOKE
       # drops the checks that need the seeded database, and keeps the ones that
       # query the real one.
-      - "{{.SERVER}} run --rm -e SMOKE=1 node node test.js"
+      - "{{.DOCKER_COMPOSE}} run --rm -e SMOKE=1 node node test.js"
