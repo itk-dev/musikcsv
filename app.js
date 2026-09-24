@@ -146,6 +146,35 @@ const port = config.port || 3000
 const appName = config.appName || 'musikcsv'
 app.listen(port, () => console.log(`${appName} listening on port ${port}!`))
 
+// Uptime Kuma cannot reach this host, so the check is inverted: push out on a
+// timer and let Kuma alert on the silence. The push carries process.uptime(),
+// which makes a restart visible even when it recovered too fast to alert.
+// The .catch is load bearing - an unhandled rejection exits the process below,
+// so an unreachable monitor would otherwise kill the app it watches. unref()
+// keeps the timer from holding the process open past the server.
+// Only the first failure and each change between failing and working is
+// logged, so a wrong URL or an untrusted CA is visible without a line a minute.
+if (config.heartbeatUrl) {
+  // Kuma shows the push URL with its query string, and that is what gets pasted.
+  const url = new URL(config.heartbeatUrl)
+  url.searchParams.set('status', 'up')
+  let failing = false
+
+  setInterval(() => {
+    url.searchParams.set('msg', `uptime ${Math.round(process.uptime())}s`)
+    fetch(url, { signal: AbortSignal.timeout(10000) })
+      .then(res => {
+        if (!res.ok) throw new Error(`status ${res.status}`)
+        if (failing) console.log('heartbeat ok')
+        failing = false
+      })
+      .catch(err => {
+        if (!failing) console.error(`err heartbeat ${err.message}${err.cause ? ' ' + err.cause.message : ''}`)
+        failing = true
+      })
+  }, config.heartbeatIntervalMs || 60000).unref()
+}
+
 // Log why the process went away. Without this, a crash or a container stop is
 // indistinguishable from the app simply vanishing.
 const logExit = (cause, code, err) => {

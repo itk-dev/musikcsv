@@ -2,6 +2,13 @@ module.exports = {
   appName: 'musikcsv',
   port: 3000,
 
+  // Push heartbeat to an Uptime Kuma push monitor. Off unless heartbeatUrl is
+  // set: the monitor cannot reach this host, so the app pushes out on a timer
+  // and Kuma alerts when the pushes stop. Set the monitor's heartbeat interval
+  // to at least 3 x heartbeatIntervalMs, with 1 retry (see README.md).
+  // heartbeatUrl: 'https://uptime.example.com/api/push/abc123',
+  // heartbeatIntervalMs: 60000,
+
   connections: {
     // The default connection.
     default: {
