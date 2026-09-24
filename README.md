@@ -35,8 +35,18 @@ so leaving `?status=up&msg=OK&ping=` on it is fine. Each push reports the proces
 as the message, which makes a restart visible in Kuma's history even when it
 recovered too fast to alert.
 
-Set the monitor's heartbeat interval longer than `heartbeatIntervalMs`, with a
-retry or two, or a restart pages.
+A push monitor has no request timeout; its **Heartbeat Interval** is the
+timeout. Kuma marks the monitor down when no push has arrived within it. Set it
+to at least **3 × `heartbeatIntervalMs`**, with **1 retry**, so 180 seconds for
+the default 60 seconds.
+
+The factor comes from the longest normal gap between two pushes. The first
+push after a start is sent one full interval later, not at once, so a restart
+right before a push is due leaves a gap of about two intervals plus the
+restart time. One lost push, a network blip or a slow monitor, gives the same
+two intervals. Three covers either with room to spare, and the retry means a
+single late push is marked pending rather than paging. At 2 × or less, a
+deploy can page.
 
 A failing push never affects the app. The first failure is logged as
 `err heartbeat ...` and recovery as `heartbeat ok`; nothing in between, so a
