@@ -23,6 +23,11 @@ module.exports = {
   },
 
   routes: {
+    // Always fails. test.js uses it to exercise the cache fallback on error.
+    always_fails: {
+      connection: 'mssql',
+      query: 'SELECT * FROM yesplan.no_such_table'
+    },
     posidryeartsl_old: {
       connection: 'mssql',
       query: `

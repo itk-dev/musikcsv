@@ -31,68 +31,90 @@ const getFormat = (path, defaultValue) => {
 
 const getResultFilename = route => path.join(__dirname, 'results', route + '.json')
 
-// @TODO: Someone has to read up on error handling!
+// Write via a temp file in the same directory and rename, so a kill during the
+// write cannot leave a truncated cache on disk. A failed write is logged and
+// swallowed: the caller still has a fresh result to serve.
+const writeResult = (route, data) => {
+  const resultFilename = getResultFilename(route)
+  const tempFilename = `${resultFilename}.${process.pid}.tmp`
+
+  try {
+    fs.writeFileSync(tempFilename, JSON.stringify(data))
+    fs.renameSync(tempFilename, resultFilename)
+  } catch (err) {
+    console.error(`err cache-write route=${route} ${err.message}`)
+    fs.rmSync(tempFilename, { force: true })
+  }
+}
+
+// Serve the last good result from disk. Returns null when there is none.
+const readCachedResult = (route, reason) => {
+  const resultFilename = getResultFilename(route)
+
+  try {
+    const createdAt = fs.statSync(resultFilename).mtime
+    const data = JSON.parse(fs.readFileSync(resultFilename))
+    const ageSeconds = Math.round((Date.now() - createdAt.getTime()) / 1000)
+    console.error(`warn fallback route=${route} reason=${reason} age=${ageSeconds}s file=${resultFilename}`)
+    return { data, createdAt, source: 'cache' }
+  } catch (err) {
+    console.error(`err no-cache route=${route} reason=${reason} ${err.message}`)
+    return null
+  }
+}
+
 for (const [route, spec] of Object.entries(config.routes)) {
   app.get(new RegExp(route + '(?:\\.(csv|json))?$'), async (req, res, next) => {
-    sql.connect(config.connections[spec.connection || 'default'])
-      .then(pool => {
-        return pool.request().query(spec.query)
-      })
-      .then(result => {
-        let data = result.recordset
-        let createdAt = new Date()
+    let result = null
 
-        const resultFilename = getResultFilename(route)
+    try {
+      const pool = await sql.connect(config.connections[spec.connection || 'default'])
+      const { recordset } = await pool.request().query(spec.query)
 
-        if (data === null || data.length === 0) {
-          try {
-            const content = fs.readFileSync(resultFilename)
-            data = JSON.parse(content)
-            createdAt = fs.statSync(resultFilename).mtime
-            const ageSeconds = Math.round((Date.now() - createdAt.getTime()) / 1000)
-            console.error(`warn fallback route=${route} reason=empty-result age=${ageSeconds}s file=${resultFilename}`)
-          } catch (exception) {
-            throw new Error('Cannot get data')
+      if (recordset && recordset.length > 0) {
+        writeResult(route, recordset)
+        result = { data: recordset, createdAt: new Date(), source: 'query' }
+      } else {
+        result = readCachedResult(route, 'empty-result')
+        if (result === null) return next(new Error('Cannot get data'))
+      }
+    } catch (err) {
+      console.error(`err ${req.method} ${req.originalUrl} ${err.message}`)
+      console.error(err.stack)
+      result = readCachedResult(route, 'error')
+      if (result === null) return next(err)
+    }
+
+    res.locals.rows = result.data.length
+
+    // Always stated, so a stale answer is visible to the caller.
+    res.header('content-created-at', result.createdAt.toISOString())
+    // Excel users never see this, but the smoke test and logs can.
+    res.header('x-musikcsv-source', result.source)
+
+    if (getFormat(req.path, 'json') === 'csv') {
+      csvStringify(
+        result.data,
+        {
+          header: true,
+          delimiter: ';'
+        },
+        function (err, data) {
+          if (err) {
+            return next(err)
           }
-        } else {
-          fs.writeFileSync(resultFilename, JSON.stringify(data))
-        }
+          res.contentType('text/csv')
 
-        res.locals.rows = data.length
+          // Hack for Excel!
+          // Use , as decimal separator in floating point numbers.
+          data = data.replace(/(?<=;|^)([0-9]+)\.([0-9]+)(?=;|$)/gm, '$1,$2')
 
-        const format = getFormat(req.path, 'json')
-
-        res.header('content-created-at', createdAt.toISOString())
-
-        if (format === 'csv') {
-          csvStringify(
-            data,
-            {
-              header: true,
-              delimiter: ';'
-            },
-            function (err, data) {
-              if (err) {
-                throw err
-              }
-              res.contentType('text/csv')
-
-              // Hack for Excel!
-              // Use , as decimal separator in floating point numbers.
-              data = data.replace(/(?<=;|^)([0-9]+)\.([0-9]+)(?=;|$)/gm, '$1,$2')
-
-              res.send(data)
-            }
-          )
-        } else {
           res.send(data)
         }
-      })
-      .catch(err => {
-        console.error(`err ${req.method} ${req.originalUrl} ${err.message}`)
-        console.error(err.stack)
-        next(err)
-      })
+      )
+    } else {
+      res.send(result.data)
+    }
   })
 }
 
