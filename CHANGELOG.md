@@ -10,6 +10,12 @@ Releases are git tags, deployed with `task deploy TAG=<tag>`.
 
 ## [Unreleased]
 
+### Changed
+
+- [PR-34](https://github.com/itk-dev/musikcsv/pull/34) -
+  README: server commands go through `itkdev-docker-compose-server`, and the
+  server stack is the `musikcsv-prod` compose project
+
 ## [1.0.0] - 2026-10-08
 
 ### Added
