@@ -10,6 +10,8 @@ Releases are git tags, deployed with `task deploy TAG=<tag>`.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-08
+
 ### Added
 
 - [PR-31](https://github.com/itk-dev/musikcsv/pull/31) -
@@ -66,4 +68,5 @@ Releases are git tags, deployed with `task deploy TAG=<tag>`.
   nginx, whose cached upstream address could serve 502 indefinitely while
   looking healthy
 
-[Unreleased]: https://github.com/itk-dev/musikcsv/compare/main...HEAD
+[Unreleased]: https://github.com/itk-dev/musikcsv/compare/1.0.0...HEAD
+[1.0.0]: https://github.com/itk-dev/musikcsv/releases/tag/1.0.0
