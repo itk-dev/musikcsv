@@ -19,10 +19,11 @@ command, e.g. `TASK_DOCKER_COMPOSE=idc task install`.
 `task deploy TAG=1.2.3` is the deploy on the server: fetch, check out the tag,
 `reset --hard`, pull the images, install, `up --detach --remove-orphans`,
 restart, then the smoke test. It runs through `itkdev-docker-compose-server`,
-which is installed on ITK's docker servers and reads the compose files from
-`COMPOSE_FILES` in `.env.docker.local`, so that file needs:
+which is installed on ITK's docker servers and reads the project name and the
+compose files from `.env.docker.local`, so that file needs:
 
 ```sh
+COMPOSE_PROJECT_NAME=musikcsv-prod
 COMPOSE_FILES=docker-compose.server.yml
 ```
 
@@ -58,18 +59,18 @@ Verify afterwards — the smoke test covers both, but by hand:
   from the deploy, not hours old. A stale timestamp means the route is being
   served from `results/posidryeartsl.json` instead of the database.
 
-### The compose project on the server is the directory name
+### Use the server wrapper on the server
 
-`.env.docker.local` sets no project name, so compose falls back to the
-directory name. The committed `.env` sets `COMPOSE_PROJECT_NAME=musikcsv`, so
-bare `docker compose` in that directory resolves the `musikcsv` project and
-reports zero containers on a stack that is running. `task deploy` runs through
-`itkdev-docker-compose-server`, which uses `.env.docker.local` and the files in
-its `COMPOSE_FILES` (see [Tasks](#tasks)). For anything else on the server, use
-`idc` ([itkdev-docker](https://github.com/itk-dev/devops_itkdev-docker)):
+The server stack is the compose project `musikcsv-prod`, set in
+`.env.docker.local` (see [Tasks](#tasks)). The committed `.env` sets
+`COMPOSE_PROJECT_NAME=musikcsv` for local development, so bare
+`docker compose` and `idc` in that directory resolve the wrong project and
+report zero containers on a stack that is running. On the server, run
+everything through `itkdev-docker-compose-server`, like `task deploy` does:
 
 ```sh
-idc ps
+itkdev-docker-compose-server ps
+itkdev-docker-compose-server logs --tail 50 node
 ```
 
 ### config.js
@@ -137,7 +138,8 @@ deploy can page.
 A failing push never affects the app. The first failure is logged as
 `err heartbeat ...` and recovery as `heartbeat ok`; nothing in between, so a
 wrong URL or an unreachable monitor shows up once in the node log
-(`idc logs node` on the server) rather than every minute.
+(`itkdev-docker-compose-server logs node` on the server) rather than every
+minute.
 
 ## Local development
 
@@ -192,7 +194,7 @@ MSSQL_IMAGE=mcr.microsoft.com/mssql/server:2017-latest docker compose --profile 
 To re-check the production version after a server upgrade:
 
 ```sh
-idc exec node node -e '
+docker exec musikcsv-prod-node-1 node -e '
 const sql = require("mssql"), c = require("./config");
 sql.connect(c.connections["<connection>"])
   .then(p => p.request().query("SELECT @@VERSION AS v"))
@@ -204,9 +206,9 @@ sql.connect(c.connections["<connection>"])
 
 Replace `<connection>` with the connection name from `config.js`.
 
-Run through `idc` (the `itkdev-docker-compose` wrapper) rather than bare
-`docker compose`, because on that server bare `docker compose` resolves a
-different project name and reports no containers.
+This one uses `docker exec` rather than `itkdev-docker-compose-server exec`,
+because the wrapper strips quotes from its arguments, which breaks the inline
+script.
 
 If that major version changes, update the pin in
 `.github/workflows/test.yml` to match.
