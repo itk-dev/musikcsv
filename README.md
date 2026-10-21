@@ -213,6 +213,30 @@ script.
 If that major version changes, update the pin in
 `.github/workflows/test.yml` to match.
 
+## Why node:24-slim and not Alpine
+
+Production, local development and CI all run `node:24-slim`. `node:24-alpine`
+was tried in October 2026 and works: a cold `yarn install --frozen-lockfile`,
+`yarn coding-standards-check`, the seed and `test.js` (11/11, with
+`config.dev.js.dist`) all pass, and no dependency needs a native build. Both
+images ship Node v24.22.0 and yarn 1.22.22.
+
+| Image            | Size (arm64, local) |
+| ---------------- | ------------------- |
+| `node:24`        | 1.64 GB             |
+| `node:24-slim`   | 352 MB              |
+| `node:24-alpine` | 238 MB              |
+
+Slim stays anyway. Alpine saves 114 MB on a single server, and in return swaps
+glibc for musl underneath the app. Node's musl builds are an experimental
+platform, while glibc is tier 1. The part musl could break is not covered by
+the tests either: they run against Azure SQL Edge locally, while production
+uses NTLM over TLS against the municipal SQL Server, where musl's DNS resolver
+behaves differently from glibc's.
+
+If the size ever matters, switch both compose files, and check the connection
+on the server with the `@@VERSION` command above before relying on it.
+
 ## Test the data
 
 ```sh
