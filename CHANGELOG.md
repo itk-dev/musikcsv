@@ -16,6 +16,12 @@ Releases are git tags, deployed with `task deploy TAG=<tag>`.
   README: server commands go through `itkdev-docker-compose-server`, and the
   server stack is the `musikcsv-prod` compose project
 
+### Fixed
+
+- [PR-35](https://github.com/itk-dev/musikcsv/pull/35) -
+  Refreshed the lockfile entries behind 15 of 16 Dependabot alerts, dropping
+  `form-data`, `uuid` and `@tootallnate/once` from the dependency tree
+
 ## [1.0.0] - 2026-10-08
 
 ### Added
